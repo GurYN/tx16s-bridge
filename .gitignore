@@ -1,0 +1,17 @@
+# Rust build output
+/target/
+
+# Generated archives (Windows source zip)
+/dist/
+
+# Python
+__pycache__/
+*.pyc
+
+# macOS
+.DS_Store
+
+# Editors
+.idea/
+.vscode/
+*.swp
