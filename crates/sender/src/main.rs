@@ -51,9 +51,9 @@ fn main() {
         cx.set_menus(vec![Menu {
             name: "TX16S Bridge".into(),
             items: vec![
-                MenuItem::action("Fermer la fenêtre", CloseWindow),
+                MenuItem::action("Close Window", CloseWindow),
                 MenuItem::separator(),
-                MenuItem::action("Quitter TX16S Bridge", Quit),
+                MenuItem::action("Quit TX16S Bridge", Quit),
             ],
         }]);
 

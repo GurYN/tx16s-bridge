@@ -22,7 +22,7 @@ impl BridgeWindow {
     pub fn new(bridge: Entity<Bridge>, cx: &mut Context<Self>) -> Self {
         let target = bridge.read(cx).config.target.clone();
         let target_input =
-            cx.new(|cx| TextInput::new(&target, "Adresse du PC, ex. 10.0.0.200", cx));
+            cx.new(|cx| TextInput::new(&target, "PC address, e.g. 192.168.1.20", cx));
         let submit = cx.subscribe(&target_input, |this, _, _: &Submitted, cx| {
             this.apply_target(cx);
         });
@@ -41,8 +41,8 @@ impl BridgeWindow {
     }
 
     fn destination(&self, sending: bool, test_signal: bool, cx: &mut Context<Self>) -> impl IntoElement {
-        let (label, color) = if sending { ("Arrêter", ERROR) } else { ("Démarrer", ACCENT) };
-        section("PC de destination")
+        let (label, color) = if sending { ("Stop", ERROR) } else { ("Start", ACCENT) };
+        section("Destination PC")
             .child(
                 div()
                     .flex()
@@ -73,7 +73,7 @@ impl BridgeWindow {
                             .border_color(rgb(if test_signal { ACCENT } else { BORDER }))
                             .bg(rgb(if test_signal { ACCENT } else { theme::FIELD })),
                     )
-                    .child("Envoyer un signal de test à la place de la radio"),
+                    .child("Send a test signal instead of the radio"),
             )
     }
 }
@@ -93,7 +93,7 @@ impl Render for BridgeWindow {
             .flex()
             .gap_3()
             .child(status_card("Radio", bridge.radio_status()))
-            .child(status_card("Envoi", bridge.network_status()))
+            .child(status_card("Sending", bridge.network_status()))
             .child(status_card("PC", bridge.receiver_status()));
         let destination = self.destination(sending, test_signal, cx);
         div()
@@ -108,7 +108,7 @@ impl Render for BridgeWindow {
             .text_sm()
             .child(destination)
             .child(status)
-            .child(section("Voies").children(
+            .child(section("Channels").children(
                 (0..AXES).map(|i| axis_row(i, input.map(|input| input.axes[i]))),
             ))
             .child(buttons(input.map_or(0, |input| input.buttons)))
@@ -173,7 +173,7 @@ fn status_card(title: &'static str, (text, tone): (String, Tone)) -> impl IntoEl
 }
 
 fn buttons(pressed: u32) -> impl IntoElement {
-    section("Boutons").child(div().flex().flex_wrap().gap_1().children((0..RADIO_BUTTONS).map(
+    section("Buttons").child(div().flex().flex_wrap().gap_1().children((0..RADIO_BUTTONS).map(
         |i| {
             let on = pressed >> i & 1 == 1;
             div()
@@ -198,7 +198,7 @@ fn axis_row(index: usize, value: Option<i16>) -> AnyElement {
     } else {
         (0.5, fraction / 2.0)
     };
-    let label = value.map_or("—".to_owned(), |_| format!("{:+.0} %", fraction * 100.0));
+    let label = value.map_or("—".to_owned(), |_| format!("{:+.0}%", fraction * 100.0));
     div()
         .flex()
         .items_center()

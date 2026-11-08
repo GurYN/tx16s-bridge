@@ -102,37 +102,37 @@ impl Bridge {
 
     pub fn radio_status(&self) -> (String, Tone) {
         if self.test_signal {
-            return ("Signal de test".into(), Tone::Accent);
+            return ("Test signal".into(), Tone::Accent);
         }
         match &self.snapshot.radio {
             RadioState::Connected(name) => (name.clone(), Tone::Ok),
-            RadioState::Searching => ("Branche la radio en mode USB Joystick".into(), Tone::Warning),
+            RadioState::Searching => ("Plug in the radio in USB Joystick mode".into(), Tone::Warning),
             RadioState::UnexpectedReport { name, len } => (
-                format!("{name} : rapport de {len} octets, mode joystick non pris en charge"),
+                format!("{name}: {len}-byte report, unsupported joystick mode"),
                 Tone::Error,
             ),
             RadioState::HidUnavailable(error) => {
-                (format!("Accès USB impossible : {error}"), Tone::Error)
+                (format!("Cannot access USB: {error}"), Tone::Error)
             }
         }
     }
 
     pub fn network_status(&self) -> (String, Tone) {
         if !self.config.sending {
-            return ("En pause".into(), Tone::Muted);
+            return ("Paused".into(), Tone::Muted);
         }
         if let Some(error) = &self.snapshot.network_error {
             return (error.clone(), Tone::Error);
         }
         if self.snapshot.input.is_none() {
-            return ("En attente de la radio".into(), Tone::Warning);
+            return ("Waiting for the radio".into(), Tone::Warning);
         }
         match self.snapshot.target {
             Some(target) => (
-                format!("{} paquets/s vers {target}", self.snapshot.sent_per_second),
+                format!("{} packets/s to {target}", self.snapshot.sent_per_second),
                 Tone::Ok,
             ),
-            None => ("Résolution de l'adresse…".into(), Tone::Muted),
+            None => ("Resolving address…".into(), Tone::Muted),
         }
     }
 
@@ -143,18 +143,18 @@ impl Bridge {
             .filter(|(_, at)| at.elapsed() < RECEIVER_STALE_AFTER);
         let Some((status, _)) = fresh else {
             return if self.config.sending {
-                ("Pas de réponse du PC".into(), Tone::Warning)
+                ("No answer from the PC".into(), Tone::Warning)
             } else {
                 ("—".into(), Tone::Muted)
             };
         };
-        let traffic = format!("{} reçus/s, {} perdus", status.packets_per_second, status.lost);
+        let traffic = format!("{} received/s, {} lost", status.packets_per_second, status.lost);
         match status.output {
-            OutputState::Ready => (format!("vJoy prêt · {traffic}"), Tone::Ok),
-            OutputState::DryRun => (format!("Mode test sans vJoy · {traffic}"), Tone::Warning),
-            OutputState::DriverMissing => ("vJoy n'est pas installé".into(), Tone::Error),
-            OutputState::DriverDisabled => ("vJoy est désactivé".into(), Tone::Error),
-            OutputState::DeviceUnavailable => ("Périphérique vJoy indisponible".into(), Tone::Error),
+            OutputState::Ready => (format!("vJoy ready · {traffic}"), Tone::Ok),
+            OutputState::DryRun => (format!("Test mode without vJoy · {traffic}"), Tone::Warning),
+            OutputState::DriverMissing => ("vJoy is not installed".into(), Tone::Error),
+            OutputState::DriverDisabled => ("vJoy is disabled".into(), Tone::Error),
+            OutputState::DeviceUnavailable => ("vJoy device unavailable".into(), Tone::Error),
         }
     }
 

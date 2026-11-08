@@ -22,7 +22,7 @@ pub fn run(config: &Config, output: &mut dyn Output, stop: &Arc<AtomicBool>) -> 
     let socket =
         UdpSocket::bind(SocketAddr::from(([0, 0, 0, 0], config.port))).with_context(|| {
             format!(
-                "impossible d'ecouter sur le port UDP {} (le service tourne peut-etre deja : \
+                "cannot listen on UDP port {} (the service may already be running: \
                  tx16s-receiver status)",
                 config.port
             )
@@ -32,7 +32,7 @@ pub fn run(config: &Config, output: &mut dyn Output, stop: &Arc<AtomicBool>) -> 
         port = config.port,
         allowed_sender = ?config.allowed_sender,
         timeout_ms = config.timeout_ms,
-        "en ecoute"
+        "listening"
     );
 
     let mut link = Link::new(config.timeout(), config.allowed_sender, Instant::now());
@@ -45,14 +45,14 @@ pub fn run(config: &Config, output: &mut dyn Output, stop: &Arc<AtomicBool>) -> 
             Ok((length, from)) => {
                 if let Some(accepted) = link.receive(Instant::now(), from, &buffer[..length]) {
                     if accepted.connected {
-                        info!(%from, "radio connectee");
+                        info!(%from, "radio connected");
                     }
                     output.apply(&accepted.control);
                 }
             }
             Err(error) if is_benign(error.kind()) => {}
             Err(error) => {
-                warn!(%error, "erreur de reception");
+                warn!(%error, "receive error");
                 std::thread::sleep(READ_TIMEOUT);
             }
         }
@@ -60,7 +60,7 @@ pub fn run(config: &Config, output: &mut dyn Output, stop: &Arc<AtomicBool>) -> 
         let now = Instant::now();
         let tick = link.tick(now);
         if tick.failsafe {
-            info!("plus de signal : axes recentres et boutons relaches");
+            info!("signal lost: axes centered, buttons released");
             output.apply(&Control::NEUTRAL);
         }
         if let Some(due) = tick.status {
@@ -70,14 +70,14 @@ pub fn run(config: &Config, output: &mut dyn Output, stop: &Arc<AtomicBool>) -> 
                 lost: due.lost,
             };
             if let Err(error) = socket.send_to(&status.encode(), due.to) {
-                warn!(%error, to = %due.to, "envoi du statut impossible");
+                warn!(%error, to = %due.to, "cannot send status");
             }
         }
         if let Some(stats) = tick.stats {
             info!(
                 packets_per_second = stats.packets_per_second,
                 lost = stats.lost,
-                "statistiques de la derniere minute"
+                "last minute statistics"
             );
         }
         if now.duration_since(last_maintain) >= MAINTAIN_INTERVAL {
@@ -91,7 +91,7 @@ pub fn run(config: &Config, output: &mut dyn Output, stop: &Arc<AtomicBool>) -> 
     }
 
     output.apply(&Control::NEUTRAL);
-    info!("arret");
+    info!("stopped");
     Ok(())
 }
 

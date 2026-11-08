@@ -83,13 +83,13 @@ impl StatusBar {
         let menu = NSMenu::new(mtm);
         let info = |title: &str| menu_item(mtm, &menu, title, None, &target);
         let radio = info("Radio");
-        let network = info("Envoi");
+        let network = info("Sending");
         let receiver = info("PC");
         menu.addItem(&NSMenuItem::separatorItem(mtm));
-        let toggle = menu_item(mtm, &menu, "Démarrer l'envoi", Some(sel!(toggleSending:)), &target);
-        menu_item(mtm, &menu, "Ouvrir TX16S Bridge…", Some(sel!(showWindow:)), &target);
+        let toggle = menu_item(mtm, &menu, "Start Sending", Some(sel!(toggleSending:)), &target);
+        menu_item(mtm, &menu, "Open TX16S Bridge…", Some(sel!(showWindow:)), &target);
         menu.addItem(&NSMenuItem::separatorItem(mtm));
-        menu_item(mtm, &menu, "Quitter TX16S Bridge", Some(sel!(quit:)), &target);
+        menu_item(mtm, &menu, "Quit TX16S Bridge", Some(sel!(quit:)), &target);
 
         let item = NSStatusBar::systemStatusBar().statusItemWithLength(NSVariableStatusItemLength);
         item.setMenu(Some(&menu));
@@ -110,10 +110,10 @@ impl StatusBar {
     fn show(&self, bridge: &Bridge) {
         let health = bridge.health();
         let lines = [
-            format!("Radio : {}", bridge.radio_status().0),
-            format!("Envoi : {}", bridge.network_status().0),
-            format!("PC : {}", bridge.receiver_status().0),
-            if bridge.config.sending { "Arrêter l'envoi" } else { "Démarrer l'envoi" }.to_owned(),
+            format!("Radio: {}", bridge.radio_status().0),
+            format!("Sending: {}", bridge.network_status().0),
+            format!("PC: {}", bridge.receiver_status().0),
+            if bridge.config.sending { "Stop Sending" } else { "Start Sending" }.to_owned(),
         ];
         let mut shown = self.shown.borrow_mut();
         let previous = shown.as_ref();
@@ -174,9 +174,9 @@ fn icon(health: Health) -> Option<Retained<NSImage>> {
 
 fn tooltip(health: Health) -> &'static str {
     match health {
-        Health::Streaming => "TX16S Bridge : envoi en cours",
-        Health::Paused => "TX16S Bridge : en pause",
-        Health::Problem => "TX16S Bridge : problème de liaison",
+        Health::Streaming => "TX16S Bridge: sending",
+        Health::Paused => "TX16S Bridge: paused",
+        Health::Problem => "TX16S Bridge: link problem",
     }
 }
 

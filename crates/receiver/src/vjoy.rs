@@ -89,9 +89,9 @@ impl VJoy {
         }
         self.state = Some(state);
         if state == OutputState::Ready {
-            info!(device = self.device, "vJoy pret");
+            info!(device = self.device, "vJoy ready");
         } else {
-            warn!(device = self.device, ?state, "vJoy indisponible : {detail}");
+            warn!(device = self.device, ?state, "vJoy unavailable: {detail}");
         }
     }
 
@@ -101,7 +101,7 @@ impl VJoy {
             for path in &self.dll_paths {
                 match Api::load(path) {
                     Ok(api) => {
-                        info!(path = %path.display(), "vJoyInterface.dll chargee");
+                        info!(path = %path.display(), "vJoyInterface.dll loaded");
                         self.api = Some(api);
                         break;
                     }
@@ -109,7 +109,7 @@ impl VJoy {
                 }
             }
             if self.api.is_none() {
-                let detail = format!("vJoy n'est pas installe ? {}", errors.join(", "));
+                let detail = format!("is vJoy installed? {}", errors.join(", "));
                 self.set_state(OutputState::DriverMissing, &detail);
                 return;
             }
@@ -120,7 +120,7 @@ impl VJoy {
         if !enabled {
             self.set_state(
                 OutputState::DriverDisabled,
-                "active vJoy dans 'Configure vJoy'",
+                "enable vJoy in 'Configure vJoy'",
             );
             return;
         }
@@ -137,11 +137,11 @@ impl VJoy {
             self.set_state(OutputState::Ready, "");
         } else {
             let detail = match status {
-                VJD_STAT_BUSY => "le peripherique est utilise par un autre programme",
+                VJD_STAT_BUSY => "the device is used by another program",
                 VJD_STAT_MISS => {
-                    "le peripherique n'existe pas : configure-le dans 'Configure vJoy'"
+                    "the device does not exist: configure it in 'Configure vJoy'"
                 }
-                _ => "impossible d'acquerir le peripherique",
+                _ => "cannot acquire the device",
             };
             self.set_state(OutputState::DeviceUnavailable, detail);
         }
@@ -181,7 +181,7 @@ impl Output for VJoy {
             self.changes.reset();
             self.set_state(
                 OutputState::DeviceUnavailable,
-                "le peripherique a ete perdu",
+                "the device was lost",
             );
         }
     }

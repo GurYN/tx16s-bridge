@@ -26,7 +26,7 @@ use crate::output::{DryRun, Output};
 #[derive(Parser)]
 #[command(version, about)]
 struct Cli {
-    /// Fichier de configuration (par defaut %ProgramData%\tx16s-bridge\config.toml).
+    /// Configuration file (default: %ProgramData%\tx16s-bridge\config.toml).
     #[arg(long, global = true)]
     config: Option<PathBuf>,
     #[command(subcommand)]
@@ -35,26 +35,26 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Command {
-    /// Lance le recepteur dans ce terminal (Ctrl+C pour arreter).
+    /// Run the receiver in this terminal (Ctrl+C to stop).
     Run {
-        /// N'utilise pas vJoy : affiche ce qui est recu.
+        /// Do not use vJoy: log what is received instead.
         #[arg(long)]
         dry_run: bool,
-        /// Port UDP, a la place de celui de la configuration.
+        /// UDP port, overriding the configuration.
         #[arg(long)]
         port: Option<u16>,
     },
-    /// Installe et demarre le service Windows (terminal administrateur).
+    /// Install and start the Windows service (administrator terminal).
     Install,
-    /// Arrete et supprime le service Windows.
+    /// Stop and remove the Windows service.
     Uninstall,
-    /// Demarre le service.
+    /// Start the service.
     Start,
-    /// Arrete le service.
+    /// Stop the service.
     Stop,
-    /// Affiche l'etat du service.
+    /// Show the service state.
     Status,
-    /// Point d'entree utilise par le gestionnaire de services.
+    /// Entry point used by the Windows service manager.
     #[command(hide = true)]
     Service,
 }
@@ -71,7 +71,7 @@ pub fn make_output(config: &Config, dry_run: bool) -> Result<Box<dyn Output>> {
     #[cfg(not(windows))]
     {
         let _ = config;
-        anyhow::bail!("vJoy n'existe que sous Windows : utilise --dry-run pour tester")
+        anyhow::bail!("vJoy only exists on Windows: use --dry-run to test")
     }
 }
 
@@ -103,7 +103,7 @@ fn manage(command: Command, config_path: Option<PathBuf>) -> Result<()> {
 
 #[cfg(not(windows))]
 fn manage(_command: Command, _config_path: Option<PathBuf>) -> Result<()> {
-    anyhow::bail!("le service n'existe que sous Windows ; ici, utilise 'run --dry-run'")
+    anyhow::bail!("the service only exists on Windows; here, use 'run --dry-run'")
 }
 
 fn main() -> Result<()> {

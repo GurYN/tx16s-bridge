@@ -236,13 +236,13 @@ impl Worker {
         let stale = !matches!(&self.resolved, Some((h, p, _)) if h == host && *p == settings.port);
         if stale {
             let result = if host.is_empty() {
-                Err("Indique l'adresse du PC".to_owned())
+                Err("Enter the PC address".to_owned())
             } else {
                 (host, settings.port)
                     .to_socket_addrs()
                     .map_err(|e| e.to_string())
                     .and_then(|mut addrs| {
-                        addrs.find(SocketAddr::is_ipv4).ok_or_else(|| "Adresse IPv4 introuvable".to_owned())
+                        addrs.find(SocketAddr::is_ipv4).ok_or_else(|| "No IPv4 address found".to_owned())
                     })
             };
             self.snapshot.receiver = None;

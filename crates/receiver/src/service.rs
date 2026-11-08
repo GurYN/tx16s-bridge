@@ -22,7 +22,7 @@ use crate::config::{self, Config};
 const NAME: &str = "tx16s-receiver";
 const DISPLAY_NAME: &str = "TX16S Receiver";
 const DESCRIPTION: &str =
-    "Recoit la radio TX16S envoyee par le Mac sur le reseau local et pilote un joystick vJoy.";
+    "Receives the TX16S radio sent by the Mac over the local network and drives a vJoy joystick.";
 const FIREWALL_RULE: &str = "tx16s-receiver";
 const ERROR_ACCESS_DENIED: i32 = 5;
 const ERROR_SERVICE_DOES_NOT_EXIST: i32 = 1060;
@@ -35,7 +35,7 @@ define_windows_service!(ffi_service_main, service_main);
 pub fn dispatch(config_path: Option<PathBuf>) -> Result<()> {
     CONFIG_PATH.set(config_path).ok();
     service_dispatcher::start(NAME, ffi_service_main)
-        .context("ce mode est reserve au gestionnaire de services Windows")
+        .context("this mode is reserved for the Windows service manager")
 }
 
 fn service_main(_arguments: Vec<OsString>) {
@@ -90,7 +90,7 @@ fn run_service() -> Result<()> {
 fn admin_hint(error: windows_service::Error) -> anyhow::Error {
     match &error {
         windows_service::Error::Winapi(io) if io.raw_os_error() == Some(ERROR_ACCESS_DENIED) => {
-            anyhow!("acces refuse : lance cette commande dans un terminal administrateur")
+            anyhow!("access denied: run this command from an administrator terminal")
         }
         _ => error.into(),
     }
@@ -116,9 +116,9 @@ fn install_executable() -> Result<PathBuf> {
     let same = current.canonicalize().ok() == target.canonicalize().ok();
     if !same {
         std::fs::create_dir_all(&directory)
-            .with_context(|| format!("creation de {} impossible", directory.display()))?;
+            .with_context(|| format!("cannot create {}", directory.display()))?;
         std::fs::copy(&current, &target)
-            .with_context(|| format!("copie vers {} impossible", target.display()))?;
+            .with_context(|| format!("cannot copy to {}", target.display()))?;
     }
     Ok(target)
 }
@@ -131,7 +131,7 @@ fn write_default_config(path: &Path) -> Result<()> {
         std::fs::create_dir_all(parent)?;
     }
     std::fs::write(path, config::DEFAULT_FILE)
-        .with_context(|| format!("ecriture de {} impossible", path.display()))
+        .with_context(|| format!("cannot write {}", path.display()))
 }
 
 fn netsh(arguments: &[&str]) -> bool {
@@ -152,7 +152,7 @@ pub fn install(config_path: Option<PathBuf>) -> Result<()> {
         .open_service(NAME, ServiceAccess::QUERY_STATUS)
         .is_ok()
     {
-        bail!("le service est deja installe : lance d'abord 'tx16s-receiver uninstall'");
+        bail!("the service is already installed: run 'tx16s-receiver uninstall' first");
     }
 
     let executable = install_executable()?;
@@ -197,16 +197,16 @@ pub fn install(config_path: Option<PathBuf>) -> Result<()> {
 
     service
         .start(&[] as &[&OsStr])
-        .context("le service est installe mais n'a pas demarre")?;
+        .context("the service is installed but did not start")?;
 
-    println!("Service installe et demarre : {}", executable.display());
-    println!("Configuration : {}", config_file.display());
-    println!("Logs : {}", config::data_dir().join("logs").display());
+    println!("Service installed and started: {}", executable.display());
+    println!("Configuration: {}", config_file.display());
+    println!("Logs: {}", config::data_dir().join("logs").display());
     if firewall {
-        println!("Pare-feu : UDP autorise sur les reseaux prives.");
-        println!("  Si ton reseau est classe 'Public' dans Windows, passe-le en 'Prive'.");
+        println!("Firewall: UDP allowed on private networks.");
+        println!("  If Windows classifies your network as 'Public', switch it to 'Private'.");
     } else {
-        println!("Pare-feu : la regle n'a pas pu etre ajoutee, autorise UDP a la main.");
+        println!("Firewall: the rule could not be added, allow UDP manually.");
     }
     Ok(())
 }
@@ -215,7 +215,7 @@ fn wait_for(service: &windows_service::service::Service, state: ServiceState) ->
     let deadline = Instant::now() + Duration::from_secs(10);
     while service.query_status()?.current_state != state {
         if Instant::now() > deadline {
-            bail!("le service n'a pas atteint l'etat {state:?} en 10 s");
+            bail!("the service did not reach the {state:?} state within 10 s");
         }
         std::thread::sleep(Duration::from_millis(200));
     }
@@ -232,16 +232,16 @@ pub fn uninstall() -> Result<()> {
                 wait_for(&service, ServiceState::Stopped)?;
             }
             service.delete().map_err(admin_hint)?;
-            println!("Service supprime.");
+            println!("Service removed.");
         }
-        Err(error) if is_missing(&error) => println!("Le service n'etait pas installe."),
+        Err(error) if is_missing(&error) => println!("The service was not installed."),
         Err(error) => return Err(admin_hint(error)),
     }
     if remove_firewall_rule() {
-        println!("Regle de pare-feu supprimee.");
+        println!("Firewall rule removed.");
     }
     println!(
-        "La configuration et les logs restent dans {}.",
+        "Configuration and logs are kept in {}.",
         config::data_dir().display()
     );
     Ok(())
@@ -252,7 +252,7 @@ fn open(access: ServiceAccess) -> Result<windows_service::service::Service> {
         .open_service(NAME, access)
         .map_err(|error| {
             if is_missing(&error) {
-                anyhow!("le service n'est pas installe : lance 'tx16s-receiver install'")
+                anyhow!("the service is not installed: run 'tx16s-receiver install'")
             } else {
                 admin_hint(error)
             }
@@ -263,7 +263,7 @@ pub fn start() -> Result<()> {
     let service = open(ServiceAccess::START | ServiceAccess::QUERY_STATUS)?;
     service.start(&[] as &[&OsStr]).map_err(admin_hint)?;
     wait_for(&service, ServiceState::Running)?;
-    println!("Service demarre.");
+    println!("Service started.");
     Ok(())
 }
 
@@ -273,24 +273,24 @@ pub fn stop() -> Result<()> {
         service.stop().map_err(admin_hint)?;
         wait_for(&service, ServiceState::Stopped)?;
     }
-    println!("Service arrete.");
+    println!("Service stopped.");
     Ok(())
 }
 
 pub fn status() -> Result<()> {
     let service = open(ServiceAccess::QUERY_STATUS)?;
     let state = match service.query_status()?.current_state {
-        ServiceState::Running => "en marche",
-        ServiceState::Stopped => "arrete",
-        ServiceState::StartPending => "en cours de demarrage",
-        ServiceState::StopPending => "en cours d'arret",
-        _ => "en pause",
+        ServiceState::Running => "running",
+        ServiceState::Stopped => "stopped",
+        ServiceState::StartPending => "starting",
+        ServiceState::StopPending => "stopping",
+        _ => "paused",
     };
-    println!("Service : {state}");
+    println!("Service: {state}");
     println!(
-        "Configuration : {}",
+        "Configuration: {}",
         config::default_path().unwrap().display()
     );
-    println!("Logs : {}", config::data_dir().join("logs").display());
+    println!("Logs: {}", config::data_dir().join("logs").display());
     Ok(())
 }

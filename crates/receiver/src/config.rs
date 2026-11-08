@@ -35,22 +35,22 @@ impl Default for Config {
 }
 
 /// Written by `install` so the settings are discoverable next to the logs.
-pub const DEFAULT_FILE: &str = r#"# Configuration de tx16s-receiver.
-# Redemarre le service apres une modification : tx16s-receiver stop puis start.
+pub const DEFAULT_FILE: &str = r#"# tx16s-receiver configuration.
+# Restart the service after editing: tx16s-receiver stop, then start.
 
-# Port UDP sur lequel le Mac envoie la radio.
+# UDP port the Mac sends the radio to.
 port = 47800
 
-# Numero du peripherique vJoy a piloter (1 a 16).
+# vJoy device to drive (1 to 16).
 device = 1
 
-# N'accepte que les paquets venant de cette adresse IP (celle du Mac).
+# Only accept packets from this IP address (the Mac's).
 # allowed_sender = "10.0.0.52"
 
-# Delai sans paquet, en millisecondes, avant de recentrer les axes.
+# Milliseconds without packets before the axes are centered.
 timeout_ms = 500
 
-# Chemin complet de vJoyInterface.dll, si vJoy n'est pas dans son dossier par defaut.
+# Full path to vJoyInterface.dll, if vJoy is not in its default folder.
 # vjoy_dll = 'C:\Program Files\vJoy\x64\vJoyInterface.dll'
 "#;
 
@@ -66,10 +66,10 @@ impl Config {
         };
         match std::fs::read_to_string(path) {
             Ok(text) => toml::from_str(&text)
-                .with_context(|| format!("configuration invalide : {}", path.display())),
+                .with_context(|| format!("invalid configuration: {}", path.display())),
             Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(Self::default()),
             Err(error) => {
-                Err(error).with_context(|| format!("lecture impossible : {}", path.display()))
+                Err(error).with_context(|| format!("cannot read {}", path.display()))
             }
         }
     }
